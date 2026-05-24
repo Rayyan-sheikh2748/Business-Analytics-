@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "zEuBNF3-ZmskUo2KMSSW5"
+uri = "file://business-analytics-source.tar.gz"
+type = "unspecified"
+title = "Business Analytics Dashboard — Full Source Code"

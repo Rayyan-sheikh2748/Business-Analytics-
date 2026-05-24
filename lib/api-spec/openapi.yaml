@@ -1,0 +1,1608 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Business Analytics Dashboard API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dashboard
+    description: Dashboard summary endpoints
+  - name: sales
+    description: Sales management
+  - name: inventory
+    description: Inventory management
+  - name: forecasting
+    description: Demand forecasting
+  - name: reports
+    description: Reports generation
+  - name: customers
+    description: Customer management
+  - name: settings
+    description: Application settings
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── DASHBOARD ───────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Overall dashboard stats
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/revenue-overview:
+    get:
+      operationId: getDashboardRevenueOverview
+      tags: [dashboard]
+      summary: Revenue overview chart data
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: daily
+      responses:
+        "200":
+          description: Revenue data points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChartDataPoint"
+
+  /dashboard/sales-by-category:
+    get:
+      operationId: getDashboardSalesByCategory
+      tags: [dashboard]
+      summary: Sales breakdown by category
+      responses:
+        "200":
+          description: Category sales data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
+  /dashboard/recent-orders:
+    get:
+      operationId: getDashboardRecentOrders
+      tags: [dashboard]
+      summary: Recent orders list
+      responses:
+        "200":
+          description: Recent orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /dashboard/inventory-status:
+    get:
+      operationId: getDashboardInventoryStatus
+      tags: [dashboard]
+      summary: Inventory status summary
+      responses:
+        "200":
+          description: Inventory status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryStatusItem"
+
+  /dashboard/revenue-vs-profit:
+    get:
+      operationId: getDashboardRevenueVsProfit
+      tags: [dashboard]
+      summary: Revenue vs profit chart data
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: monthly
+      responses:
+        "200":
+          description: Revenue vs profit data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevenueProfitPoint"
+
+  /dashboard/top-selling-products:
+    get:
+      operationId: getDashboardTopSellingProducts
+      tags: [dashboard]
+      summary: Top selling products
+      responses:
+        "200":
+          description: Top selling products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopProduct"
+
+  /dashboard/ai-insights:
+    get:
+      operationId: getDashboardAiInsights
+      tags: [dashboard]
+      summary: AI insights and recommendations
+      responses:
+        "200":
+          description: AI insights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiInsight"
+
+  # ─── SALES ───────────────────────────────────────────────────
+  /sales:
+    get:
+      operationId: getSales
+      tags: [sales]
+      summary: List sales records
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: channel
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated sales records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesList"
+    post:
+      operationId: createSale
+      tags: [sales]
+      summary: Create a new sale record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleInput"
+      responses:
+        "201":
+          description: Created sale
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+
+  /sales/stats:
+    get:
+      operationId: getSalesStats
+      tags: [sales]
+      summary: Sales overview statistics
+      responses:
+        "200":
+          description: Sales stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesStats"
+
+  /sales/trend:
+    get:
+      operationId: getSalesTrend
+      tags: [sales]
+      summary: Sales trend chart data
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: daily
+      responses:
+        "200":
+          description: Sales trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChartDataPoint"
+
+  /sales/by-category:
+    get:
+      operationId: getSalesByCategory
+      tags: [sales]
+      summary: Sales by product category
+      responses:
+        "200":
+          description: Sales by category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
+  /sales/top-products:
+    get:
+      operationId: getSalesTopProducts
+      tags: [sales]
+      summary: Top selling products for sales page
+      responses:
+        "200":
+          description: Top products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopProduct"
+
+  /sales/{id}:
+    put:
+      operationId: updateSale
+      tags: [sales]
+      summary: Update a sale record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleUpdate"
+      responses:
+        "200":
+          description: Updated sale
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+    delete:
+      operationId: deleteSale
+      tags: [sales]
+      summary: Delete a sale record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  # ─── INVENTORY ────────────────────────────────────────────────
+  /inventory:
+    get:
+      operationId: getInventory
+      tags: [inventory]
+      summary: List inventory items
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: warehouse
+          in: query
+          schema:
+            type: string
+        - name: stockStatus
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Inventory list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryList"
+    post:
+      operationId: createInventoryItem
+      tags: [inventory]
+      summary: Add a new product to inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryItemInput"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/stats:
+    get:
+      operationId: getInventoryStats
+      tags: [inventory]
+      summary: Inventory statistics
+      responses:
+        "200":
+          description: Inventory stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryStats"
+
+  /inventory/stock-status:
+    get:
+      operationId: getInventoryStockStatus
+      tags: [inventory]
+      summary: Stock status breakdown
+      responses:
+        "200":
+          description: Stock status summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockStatusItem"
+
+  /inventory/low-stock-alerts:
+    get:
+      operationId: getInventoryLowStockAlerts
+      tags: [inventory]
+      summary: Products with low stock
+      responses:
+        "200":
+          description: Low stock alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LowStockAlert"
+
+  /inventory/recent-movements:
+    get:
+      operationId: getInventoryRecentMovements
+      tags: [inventory]
+      summary: Recent stock movements
+      responses:
+        "200":
+          description: Recent movements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockMovement"
+
+  /inventory/trend:
+    get:
+      operationId: getInventoryTrend
+      tags: [inventory]
+      summary: Stock trend chart data
+      responses:
+        "200":
+          description: Trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChartDataPoint"
+
+  /inventory/by-category:
+    get:
+      operationId: getInventoryByCategory
+      tags: [inventory]
+      summary: Inventory value by category
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
+  /inventory/{id}:
+    put:
+      operationId: updateInventoryItem
+      tags: [inventory]
+      summary: Update an inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryItemUpdate"
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+    delete:
+      operationId: deleteInventoryItem
+      tags: [inventory]
+      summary: Delete an inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  # ─── FORECASTING ──────────────────────────────────────────────
+  /forecasting/forecast:
+    get:
+      operationId: getForecast
+      tags: [forecasting]
+      summary: Get demand forecast
+      parameters:
+        - name: productId
+          in: query
+          schema:
+            type: integer
+        - name: model
+          in: query
+          schema:
+            type: string
+            default: ARIMA
+        - name: horizon
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Forecast data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastResult"
+
+  /forecasting/breakdown:
+    get:
+      operationId: getForecastBreakdown
+      tags: [forecasting]
+      summary: Weekly forecast breakdown
+      parameters:
+        - name: productId
+          in: query
+          schema:
+            type: integer
+        - name: model
+          in: query
+          schema:
+            type: string
+        - name: horizon
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Forecast breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ForecastBreakdownRow"
+
+  /forecasting/heatmap:
+    get:
+      operationId: getForecastHeatmap
+      tags: [forecasting]
+      summary: Daily demand heatmap
+      parameters:
+        - name: productId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Heatmap data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeatmapRow"
+
+  /forecasting/model-comparison:
+    get:
+      operationId: getForecastModelComparison
+      tags: [forecasting]
+      summary: Forecast model performance comparison
+      responses:
+        "200":
+          description: Model comparison
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModelComparison"
+
+  # ─── REPORTS ─────────────────────────────────────────────────
+  /reports:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Generate a report
+      parameters:
+        - name: reportType
+          in: query
+          schema:
+            type: string
+            default: Sales Report
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: product
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportData"
+
+  /reports/stats:
+    get:
+      operationId: getReportStats
+      tags: [reports]
+      summary: Report summary statistics
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportStats"
+
+  /reports/revenue-trend:
+    get:
+      operationId: getReportRevenueTrend
+      tags: [reports]
+      summary: Revenue trend for reports
+      responses:
+        "200":
+          description: Revenue trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChartDataPoint"
+
+  /reports/by-category:
+    get:
+      operationId: getReportByCategory
+      tags: [reports]
+      summary: Revenue breakdown by category for reports
+      responses:
+        "200":
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
+  /reports/top-products:
+    get:
+      operationId: getReportTopProducts
+      tags: [reports]
+      summary: Top performing products for reports
+      responses:
+        "200":
+          description: Top products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopProduct"
+
+  # ─── CUSTOMERS ────────────────────────────────────────────────
+  /customers:
+    get:
+      operationId: getCustomers
+      tags: [customers]
+      summary: List customers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: segment
+          in: query
+          schema:
+            type: string
+        - name: group
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customers list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerList"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Add a new customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/stats:
+    get:
+      operationId: getCustomerStats
+      tags: [customers]
+      summary: Customer statistics
+      responses:
+        "200":
+          description: Customer stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerStats"
+
+  /customers/by-segment:
+    get:
+      operationId: getCustomersBySegment
+      tags: [customers]
+      summary: Customer breakdown by segment
+      responses:
+        "200":
+          description: Segments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
+  /customers/top-by-revenue:
+    get:
+      operationId: getCustomersTopByRevenue
+      tags: [customers]
+      summary: Top customers by revenue
+      responses:
+        "200":
+          description: Top customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopCustomer"
+
+  /customers/trend:
+    get:
+      operationId: getCustomersTrend
+      tags: [customers]
+      summary: New customers trend chart
+      responses:
+        "200":
+          description: Trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChartDataPoint"
+
+  /customers/by-location:
+    get:
+      operationId: getCustomersByLocation
+      tags: [customers]
+      summary: Customers by location
+      responses:
+        "200":
+          description: Location data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LocationStat"
+
+  /customers/{id}:
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  # ─── SETTINGS ────────────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get application settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update application settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    DeleteResult:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+
+    ChartDataPoint:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value:
+          type: number
+        secondary:
+          type: ["number", "null"]
+
+    CategoryStat:
+      type: object
+      required: [name, value, percentage]
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+        percentage:
+          type: number
+        color:
+          type: ["string", "null"]
+
+    RevenueProfitPoint:
+      type: object
+      required: [label, revenue, profit]
+      properties:
+        label:
+          type: string
+        revenue:
+          type: number
+        profit:
+          type: number
+
+    TopProduct:
+      type: object
+      required: [id, name, unitsSold, revenue]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        unitsSold:
+          type: integer
+        revenue:
+          type: number
+        rank:
+          type: ["integer", "null"]
+
+    AiInsight:
+      type: object
+      required: [type, title, message]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [totalRevenue, totalOrders, totalProfit, totalProducts, newCustomers]
+      properties:
+        totalRevenue:
+          type: number
+        totalOrders:
+          type: integer
+        totalProfit:
+          type: number
+        totalProducts:
+          type: integer
+        newCustomers:
+          type: integer
+        revenueChange:
+          type: number
+        ordersChange:
+          type: number
+        profitChange:
+          type: number
+        productsChange:
+          type: number
+        customersChange:
+          type: number
+
+    Order:
+      type: object
+      required: [id, orderId, product, amount, status, date]
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: string
+        product:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        date:
+          type: string
+
+    InventoryStatusItem:
+      type: object
+      required: [id, product, stock, status]
+      properties:
+        id:
+          type: integer
+        product:
+          type: string
+        stock:
+          type: integer
+        status:
+          type: string
+
+    Sale:
+      type: object
+      required: [id, invoiceId, date, customer, product, category, qty, unitPrice, revenue, channel]
+      properties:
+        id:
+          type: integer
+        invoiceId:
+          type: string
+        date:
+          type: string
+        customer:
+          type: string
+        product:
+          type: string
+        category:
+          type: string
+        qty:
+          type: integer
+        unitPrice:
+          type: number
+        revenue:
+          type: number
+        channel:
+          type: string
+
+    SaleInput:
+      type: object
+      required: [customer, product, category, qty, unitPrice, channel]
+      properties:
+        customer:
+          type: string
+        product:
+          type: string
+        category:
+          type: string
+        qty:
+          type: integer
+        unitPrice:
+          type: number
+        channel:
+          type: string
+        date:
+          type: ["string", "null"]
+
+    SaleUpdate:
+      type: object
+      properties:
+        customer:
+          type: string
+        product:
+          type: string
+        category:
+          type: string
+        qty:
+          type: integer
+        unitPrice:
+          type: number
+        channel:
+          type: string
+
+    SalesList:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sale"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    SalesStats:
+      type: object
+      required: [totalRevenue, totalUnitsSold, totalTransactions, newCustomers]
+      properties:
+        totalRevenue:
+          type: number
+        totalUnitsSold:
+          type: integer
+        totalTransactions:
+          type: integer
+        newCustomers:
+          type: integer
+        revenueChange:
+          type: number
+        unitsSoldChange:
+          type: number
+        transactionsChange:
+          type: number
+        newCustomersChange:
+          type: number
+
+    InventoryItem:
+      type: object
+      required: [id, sku, product, category, warehouse, stock, threshold, status, stockValue]
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        product:
+          type: string
+        category:
+          type: string
+        warehouse:
+          type: string
+        stock:
+          type: integer
+        threshold:
+          type: integer
+        status:
+          type: string
+        stockValue:
+          type: number
+
+    InventoryItemInput:
+      type: object
+      required: [sku, product, category, warehouse, stock, threshold]
+      properties:
+        sku:
+          type: string
+        product:
+          type: string
+        category:
+          type: string
+        warehouse:
+          type: string
+        stock:
+          type: integer
+        threshold:
+          type: integer
+        unitCost:
+          type: ["number", "null"]
+
+    InventoryItemUpdate:
+      type: object
+      properties:
+        product:
+          type: string
+        category:
+          type: string
+        warehouse:
+          type: string
+        stock:
+          type: integer
+        threshold:
+          type: integer
+        unitCost:
+          type: ["number", "null"]
+
+    InventoryList:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    InventoryStats:
+      type: object
+      required: [totalProducts, totalStock, lowStockItems, outOfStockItems, inventoryValue]
+      properties:
+        totalProducts:
+          type: integer
+        totalStock:
+          type: integer
+        lowStockItems:
+          type: integer
+        outOfStockItems:
+          type: integer
+        inventoryValue:
+          type: number
+
+    StockStatusItem:
+      type: object
+      required: [status, count, percentage]
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    LowStockAlert:
+      type: object
+      required: [id, product, stock, threshold]
+      properties:
+        id:
+          type: integer
+        product:
+          type: string
+        stock:
+          type: integer
+        threshold:
+          type: integer
+
+    StockMovement:
+      type: object
+      required: [id, product, warehouse, change, date]
+      properties:
+        id:
+          type: integer
+        product:
+          type: string
+        warehouse:
+          type: string
+        change:
+          type: integer
+        date:
+          type: string
+
+    ForecastResult:
+      type: object
+      required: [forecastedSales, avgDailyDemand, peakDemandDay, totalRevenueForecast, recommendedStock, mape, rmse, accuracy, chartData]
+      properties:
+        forecastedSales:
+          type: integer
+        avgDailyDemand:
+          type: number
+        peakDemandDay:
+          type: string
+        peakDemandUnits:
+          type: integer
+        totalRevenueForecast:
+          type: number
+        recommendedStock:
+          type: integer
+        mape:
+          type: number
+        rmse:
+          type: number
+        accuracy:
+          type: number
+        chartData:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForecastChartPoint"
+
+    ForecastChartPoint:
+      type: object
+      required: [label, historical, forecasted]
+      properties:
+        label:
+          type: string
+        historical:
+          type: ["number", "null"]
+        forecasted:
+          type: ["number", "null"]
+        upperBound:
+          type: ["number", "null"]
+        lowerBound:
+          type: ["number", "null"]
+
+    ForecastBreakdownRow:
+      type: object
+      required: [period, forecastedDemand, lowerBound, upperBound, revenueForecast]
+      properties:
+        period:
+          type: string
+        forecastedDemand:
+          type: integer
+        lowerBound:
+          type: integer
+        upperBound:
+          type: integer
+        revenueForecast:
+          type: number
+
+    HeatmapRow:
+      type: object
+      required: [week, mon, tue, wed, thu, fri, sat, sun]
+      properties:
+        week:
+          type: integer
+        mon:
+          type: integer
+        tue:
+          type: integer
+        wed:
+          type: integer
+        thu:
+          type: integer
+        fri:
+          type: integer
+        sat:
+          type: integer
+        sun:
+          type: integer
+
+    ModelComparison:
+      type: object
+      required: [model, mape, isRecommended]
+      properties:
+        model:
+          type: string
+        mape:
+          type: number
+        isRecommended:
+          type: boolean
+
+    ReportData:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportRow"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ReportRow:
+      type: object
+      required: [date, product, category, orders, unitsSold, revenue, profit]
+      properties:
+        date:
+          type: string
+        product:
+          type: string
+        category:
+          type: string
+        orders:
+          type: integer
+        unitsSold:
+          type: integer
+        revenue:
+          type: number
+        profit:
+          type: number
+
+    ReportStats:
+      type: object
+      required: [totalRevenue, totalOrders, totalUnitsSold, avgOrderValue]
+      properties:
+        totalRevenue:
+          type: number
+        totalOrders:
+          type: integer
+        totalUnitsSold:
+          type: integer
+        avgOrderValue:
+          type: number
+        revenueChange:
+          type: number
+        ordersChange:
+          type: number
+        unitsSoldChange:
+          type: number
+
+    Customer:
+      type: object
+      required: [id, name, email, phone, segment, totalOrders, totalSpent, joinDate]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        segment:
+          type: string
+        totalOrders:
+          type: integer
+        totalSpent:
+          type: number
+        joinDate:
+          type: string
+        location:
+          type: ["string", "null"]
+
+    CustomerInput:
+      type: object
+      required: [name, email, phone, segment]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        segment:
+          type: string
+        location:
+          type: ["string", "null"]
+
+    CustomerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        segment:
+          type: string
+        location:
+          type: ["string", "null"]
+
+    CustomerList:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    CustomerStats:
+      type: object
+      required: [totalCustomers, newCustomers, totalOrders, totalRevenue, avgCustomerValue]
+      properties:
+        totalCustomers:
+          type: integer
+        newCustomers:
+          type: integer
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        avgCustomerValue:
+          type: number
+        totalCustomersChange:
+          type: number
+        newCustomersChange:
+          type: number
+        totalOrdersChange:
+          type: number
+        totalRevenueChange:
+          type: number
+
+    TopCustomer:
+      type: object
+      required: [id, name, revenue, segment]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        revenue:
+          type: number
+        segment:
+          type: string
+
+    LocationStat:
+      type: object
+      required: [location, count, percentage]
+      properties:
+        location:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    AppSettings:
+      type: object
+      required: [businessName, businessEmail, defaultTheme, language, timezone, currency, dateFormat, timeFormat, enableAnalytics, autoRefresh, emailNotifications, darkMode, compactView]
+      properties:
+        businessName:
+          type: string
+        businessEmail:
+          type: string
+        defaultTheme:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+        currency:
+          type: string
+        dateFormat:
+          type: string
+        timeFormat:
+          type: string
+        enableAnalytics:
+          type: boolean
+        autoRefresh:
+          type: boolean
+        emailNotifications:
+          type: boolean
+        darkMode:
+          type: boolean
+        compactView:
+          type: boolean
+
+    SettingsUpdate:
+      type: object
+      properties:
+        businessName:
+          type: string
+        businessEmail:
+          type: string
+        defaultTheme:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+        currency:
+          type: string
+        dateFormat:
+          type: string
+        timeFormat:
+          type: string
+        enableAnalytics:
+          type: boolean
+        autoRefresh:
+          type: boolean
+        emailNotifications:
+          type: boolean
+        darkMode:
+          type: boolean
+        compactView:
+          type: boolean
