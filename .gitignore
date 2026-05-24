@@ -44,6 +44,13 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
-.cache/
-.local/
+# MERN stack
+client/dist/
+client/node_modules/
+server/node_modules/
+*.zip
+
+# Environment files
+.env
+server/.env
+client/.env

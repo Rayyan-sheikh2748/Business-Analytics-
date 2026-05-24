@@ -1,213 +1,224 @@
-# Sharma General Store — Business Analytics Dashboard
+# Business Analytics — MERN Stack
 
-A full-stack Business Analytics Dashboard for a grocery store, built with React + Vite (frontend) and Express + PostgreSQL + Drizzle ORM (backend).
+A production-ready Business Analytics Dashboard built with **MongoDB**, **Express**, **React**, and **Node.js**.
 
-## Pages
-1. **Dashboard** — KPI cards, revenue chart, sales by category, recent orders, inventory status
-2. **Sales** — Full CRUD (Add/Edit/Delete), CSV export/import, filters, pagination
-3. **Inventory** — Product management, low-stock alerts, stock movements, warehouse filters
-4. **Forecasting** — AI-powered demand forecasting, model comparison, heatmap
-5. **Reports** — Generate/export CSV and PDF reports, email & schedule reports
-6. **Customers** — Customer management, segments (VIP/Premium/Regular/New), location chart
-7. **Settings** — General, Profile, Notifications, Security (password change), Billing, Audit Logs
+## Features
+
+- **Dashboard** — KPI cards, revenue charts, category breakdown, recent orders, inventory status, AI insights
+- **Sales** — Full CRUD, CSV export/import, filters, pagination
+- **Inventory** — Product management, low-stock alerts, stock movements
+- **Forecasting** — Demand forecasting, model comparison, heatmap
+- **Reports** — Generate and export CSV/PDF reports
+- **Customers** — Segments (VIP/Premium/Regular/New), location analytics
+- **Settings** — Business profile, notifications, theme preferences
 
 ## Tech Stack
-- **Frontend**: React 19, Vite 7, TailwindCSS 4, Recharts, Wouter, TanStack Query
-- **Backend**: Express 5, Node.js 24, TypeScript 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod
-- **Package Manager**: pnpm (workspaces monorepo)
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 19, Vite 6, TailwindCSS 4, Framer Motion, Recharts, TanStack Query |
+| Backend | Express 4, Node.js, Mongoose |
+| Database | MongoDB |
+| Validation | Zod |
+
+## Project Structure
+
+```
+├── client/                 # React frontend (Vite)
+│   └── src/
+│       ├── components/     # Layout, StatCard, UI primitives
+│       ├── pages/          # Dashboard, Sales, Inventory, etc.
+│       └── lib/api-client/ # API hooks (React Query)
+├── server/                 # Express + MongoDB backend
+│   └── src/
+│       ├── config/         # DB & env configuration
+│       ├── controllers/    # Route handlers
+│       ├── models/         # Mongoose schemas
+│       ├── routes/         # API routes
+│       ├── middleware/     # Error handling, validation
+│       ├── services/       # Business logic
+│       ├── seeds/          # Multi-dataset seed scripts
+│       └── utils/          # Helpers
+└── README.md
+```
 
 ---
 
 ## Local Setup (VS Code)
 
 ### Prerequisites
-- **Node.js 20+** — https://nodejs.org
-- **pnpm 9+** — Run: `npm install -g pnpm`
-- **PostgreSQL 14+** — https://www.postgresql.org/download/
 
-### 1. Install Dependencies
+- **Node.js 20+** — [nodejs.org](https://nodejs.org)
+- **MongoDB 6+** — [mongodb.com/try/download/community](https://www.mongodb.com/try/download/community)  
+  Or use [MongoDB Atlas](https://www.mongodb.com/atlas) (free tier)
+
+### 1. Clone & Install
 
 ```bash
-pnpm install
+git clone https://github.com/Rayyan-sheikh2748/Business-Analytics-.git
+cd Business-Analytics-
+
+# Backend
+cd server
+npm install
+
+# Frontend (new terminal)
+cd ../client
+npm install
 ```
 
-### 2. Create Environment File
+### 2. Environment Variables
 
-Create a `.env` file in the **project root**:
+Create `server/.env`:
 
 ```env
-DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/grocery_analytics
-SESSION_SECRET=change-this-to-a-long-random-string
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/business_analytics
+NODE_ENV=development
+CLIENT_URL=http://localhost:5173
 ```
 
-> Replace `postgres`, `yourpassword`, and `localhost:5432` with your actual PostgreSQL credentials.
+For **MongoDB Atlas**, replace `MONGODB_URI` with your connection string:
 
-### 3. Create the Database
-
-In your PostgreSQL client (psql or pgAdmin):
-
-```sql
-CREATE DATABASE grocery_analytics;
+```env
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/business_analytics
 ```
 
-### 4. Push Schema to Database
+> If MongoDB is not installed locally, the server automatically falls back to an in-memory database for development.
+
+### 3. Seed the Database
 
 ```bash
-pnpm --filter @workspace/db run push
+cd server
+
+# Grocery shop (default)
+npm run seed
+
+# Other datasets
+npm run seed:electronics
+npm run seed:bakery
+npm run seed:retail
 ```
 
-This creates all tables: `products`, `sales`, `customers`, `settings`, `stock_movements`.
-
-### 5. Seed with Grocery Shop Data
+### 4. Start Backend (Terminal 1)
 
 ```bash
-pnpm --filter @workspace/scripts run seed
+cd server
+npm run server
 ```
 
-This inserts:
-- 20 grocery products (Basmati Rice, Tea, Maggi, Colgate, etc.)
-- 15 customers with Indian names and cities
-- 60 sales transactions across April-May 2024
-- 8 stock movement records
-- 1 settings record for "Sharma General Store"
+API runs at **http://localhost:5000**
 
-### 6. Start the Backend (Terminal 1)
+### 5. Start Frontend (Terminal 2)
 
 ```bash
-pnpm --filter @workspace/api-server run dev
+cd client
+npm run dev
 ```
 
-The API server starts on **http://localhost:8080**
-
-### 7. Start the Frontend (Terminal 2)
-
-```bash
-pnpm --filter @workspace/business-analytics run dev
-```
-
-The frontend starts on **http://localhost:5173**
-
-Open http://localhost:5173 in your browser.
+Open **http://localhost:5173**
 
 ---
 
-## VS Code Recommended Setup
+## Commands Reference
 
-Install these extensions for best experience:
-- **ESLint** (`dbaeumer.vscode-eslint`)
-- **Prettier** (`esbenp.prettier-vscode`)
-- **Tailwind CSS IntelliSense** (`bradlc.vscode-tailwindcss`)
-- **Thunder Client** or **REST Client** for API testing
-
-### VS Code Launch Configuration
-
-Create `.vscode/launch.json`:
-
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "API Server",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@workspace/api-server", "run", "dev"],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
-    }
-  ]
-}
-```
+| Location | Command | Description |
+|----------|---------|-------------|
+| `server/` | `npm run server` | Start dev server with hot reload |
+| `server/` | `npm start` | Start production server |
+| `server/` | `npm run seed` | Seed grocery dataset |
+| `server/` | `npm run seed:electronics` | Seed electronics shop data |
+| `server/` | `npm run seed:bakery` | Seed bakery shop data |
+| `server/` | `npm run seed:retail` | Seed retail analytics data |
+| `client/` | `npm run dev` | Start Vite dev server |
+| `client/` | `npm run build` | Production build |
+| `client/` | `npm run preview` | Preview production build |
 
 ---
 
 ## API Endpoints
 
-### Sales
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /api/sales/stats | Total revenue, units, transactions |
-| GET | /api/sales/trend | Daily revenue trend (30 days) |
-| GET | /api/sales/by-category | Revenue breakdown by category |
-| GET | /api/sales/top-products | Top 5 products by revenue |
-| GET | /api/sales?page=1&limit=10&search=&category=&channel= | Paginated sales list |
-| POST | /api/sales | Create new sale |
-| PUT | /api/sales/:id | Update sale |
-| DELETE | /api/sales/:id | Delete sale |
+| GET | `/api/healthz` | Health check |
+| GET | `/api/dashboard/stats` | Dashboard KPIs |
+| GET | `/api/sales` | Paginated sales list |
+| POST | `/api/sales` | Create sale |
+| GET | `/api/inventory` | Paginated inventory |
+| GET | `/api/customers` | Paginated customers |
+| GET | `/api/reports` | Report data |
+| GET | `/api/forecasting/forecast` | Demand forecast |
+| GET/PUT | `/api/settings` | App settings |
 
-### Inventory
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/inventory/stats | Total products, stock, value |
-| GET | /api/inventory/stock-status | In Stock / Low Stock / Out of Stock counts |
-| GET | /api/inventory/low-stock-alerts | Products below threshold |
-| GET | /api/inventory/recent-movements | Last 5 stock movements |
-| GET | /api/inventory | Paginated product list |
-| POST | /api/inventory | Add new product |
-| PUT | /api/inventory/:id | Update product |
-| DELETE | /api/inventory/:id | Delete product |
-
-### Customers
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/customers/stats | Total customers, revenue, orders |
-| GET | /api/customers/by-segment | Segment breakdown |
-| GET | /api/customers/top-by-revenue | Top 5 customers |
-| GET | /api/customers/by-location | Customers by city |
-| GET | /api/customers | Paginated customer list |
-| POST | /api/customers | Add new customer |
-| PUT | /api/customers/:id | Update customer |
-| DELETE | /api/customers/:id | Delete customer |
-
-### Other
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/dashboard/stats | Dashboard KPI cards |
-| GET | /api/settings | Get app settings |
-| PUT | /api/settings | Update settings |
-| GET | /api/reports/stats | Report summary stats |
-| GET | /api/reports | Paginated report data |
+Full API documentation is available in the codebase under `server/src/routes/`.
 
 ---
 
-## Project Structure
+## MongoDB Setup
 
-```
-.
-├── artifacts/
-│   ├── api-server/          # Express backend
-│   │   └── src/
-│   │       ├── index.ts     # App entry, middleware
-│   │       └── routes/      # sales, inventory, customers, reports, etc.
-│   └── business-analytics/  # React frontend
-│       └── src/
-│           ├── pages/       # 7 pages
-│           ├── components/  # Layout, StatCard, etc.
-│           └── lib/         # format helpers
-├── lib/
-│   ├── db/                  # Drizzle ORM + schema
-│   ├── api-spec/            # OpenAPI spec (source of truth)
-│   ├── api-zod/             # Generated Zod validation schemas
-│   └── api-client-react/    # Generated React Query hooks
-├── scripts/
-│   └── src/seed.ts          # Grocery shop seed data
-├── pnpm-workspace.yaml
-└── README.md
-```
+### Option A: Local MongoDB (Windows)
+
+1. Download MongoDB Community Server from [mongodb.com](https://www.mongodb.com/try/download/community)
+2. Install and start the MongoDB service
+3. Verify: `mongosh` connects successfully
+4. Use `MONGODB_URI=mongodb://127.0.0.1:27017/business_analytics`
+
+### Option B: MongoDB Atlas (Cloud)
+
+1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas)
+2. Create a database user and whitelist your IP (or `0.0.0.0/0` for dev)
+3. Copy the connection string into `server/.env`
+
+### Option C: No MongoDB Installed
+
+The server auto-falls back to an in-memory MongoDB when local connection fails.  
+Data is lost on restart — use for quick testing only.
 
 ---
 
-## Common Issues
+## Port Configuration
 
-**Port conflict**: If port 8080 or 5173 is busy, edit the `PORT` in the respective package's config.
+| Service | Default Port | Config |
+|---------|-------------|--------|
+| Frontend | 5173 | `client/vite.config.ts` or `PORT` env |
+| Backend | 5000 | `server/.env` → `PORT` |
+| MongoDB | 27017 | `server/.env` → `MONGODB_URI` |
 
-**Database connection fails**: Double-check your `DATABASE_URL` in `.env`. Make sure PostgreSQL is running.
+---
 
-**`drizzle-kit push` fails**: Make sure the database `grocery_analytics` exists first.
+## Troubleshooting
 
-**Frontend shows no data**: Ensure the API server is running on port 8080. Open http://localhost:8080/api/healthz to verify.
+**Frontend shows no data**
+- Ensure backend is running on port 5000
+- Check http://localhost:5000/api/healthz returns `{"status":"ok"}`
+- Run `npm run seed` in the server folder
 
-**TypeScript errors**: Run `pnpm run typecheck` to see all errors. Most are harmless type narrowing issues.
+**MongoDB connection fails**
+- Verify MongoDB service is running: `services.msc` → MongoDB
+- Check `MONGODB_URI` in `server/.env`
+- Try Atlas connection string if local install fails
+
+**Port already in use**
+- Change `PORT` in `server/.env` and update `VITE_API_URL` in client if needed
+
+**Build errors in client**
+- Delete `client/node_modules` and run `npm install` again
+- Ensure Node.js 20+ is installed
+
+**CORS errors**
+- Set `CLIENT_URL=http://localhost:5173` in `server/.env`
+
+---
+
+## Design System
+
+- **Primary accent:** `#a0aecd`
+- **Primary dark:** `#000000`
+- **Typography:** DM Sans
+- **Animations:** Framer Motion (page transitions, stat cards, hover effects)
+
+---
+
+## License
+
+MIT
