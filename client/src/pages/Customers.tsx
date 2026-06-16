@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Download, Plus, Pencil, Trash2, Search, X, Save, AlertTriangle } from "lucide-react";
 import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Layout from "@/components/Layout";
+import PageShell from "@/components/PageShell";
+import PageHero from "@/components/PageHero";
 import StatCard from "@/components/StatCard";
 import { formatINR } from "@/lib/format";
 import {
@@ -12,7 +14,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-const COLORS = ["#4F46E5", "#10B981", "#F59E0B", "#EF4444"];
+const COLORS = ["#a0aecd", "#000000", "#64748b", "#94a3b8"];
 const SEGMENTS = ["Premium", "VIP", "Regular", "New"];
 
 function SegmentBadge({ segment }: { segment: string }) {
@@ -185,36 +187,33 @@ export default function Customers() {
       {deleteTarget && <DeleteConfirm label={deleteTarget.label} onClose={() => setDeleteTarget(null)} onConfirm={() => deleteMutation.mutate({ id: deleteTarget.id })} />}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
 
-      <div className="p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Customers</h1>
-            <p className="text-gray-500 text-sm">Manage and analyze your customer base</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={exportCSV} className="flex items-center gap-2 border border-gray-200 bg-white text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50">
-              <Download className="w-4 h-4" /> Export
-            </button>
-            <button onClick={() => setAddOpen(true)} className="flex items-center gap-2 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
-              <Plus className="w-4 h-4" /> Add Customer
-            </button>
-          </div>
-        </div>
+      <PageShell>
+        <PageHero
+          badge="CRM"
+          title="Customers"
+          subtitle="Manage and analyze your customer base with segmentation and revenue insights."
+          actions={
+            <>
+              <button type="button" onClick={exportCSV} className="btn-secondary flex items-center gap-2"><Download className="w-4 h-4" /> Export</button>
+              <button type="button" onClick={() => setAddOpen(true)} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" /> Add Customer</button>
+            </>
+          }
+        />
 
-        <div className="grid grid-cols-5 gap-4">
-          <StatCard title="Total Customers" value={(stats?.totalCustomers ?? 1280).toLocaleString("en-IN")} change={stats?.totalCustomersChange ?? 8.4}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+          <StatCard title="Total Customers" value={(stats?.totalCustomers ?? 0).toLocaleString("en-IN")} change={stats?.totalCustomersChange ?? 0}
             icon={<span className="text-blue-600 font-bold text-sm">C</span>} iconBg="bg-blue-100" />
-          <StatCard title="New Customers" value={(stats?.newCustomers ?? 86).toLocaleString("en-IN")} change={stats?.newCustomersChange ?? 15.8}
+          <StatCard title="New Customers" value={(stats?.newCustomers ?? 0).toLocaleString("en-IN")} change={stats?.newCustomersChange ?? 0}
             icon={<span className="text-emerald-600 font-bold text-sm">N</span>} iconBg="bg-emerald-100" />
-          <StatCard title="Total Orders" value={(stats?.totalOrders ?? 4200).toLocaleString("en-IN")} change={stats?.totalOrdersChange ?? 12.2}
+          <StatCard title="Total Orders" value={(stats?.totalOrders ?? 0).toLocaleString("en-IN")} change={stats?.totalOrdersChange ?? 0}
             icon={<span className="text-purple-600 font-bold text-sm">O</span>} iconBg="bg-purple-100" />
-          <StatCard title="Total Revenue" value={formatINR(stats?.totalRevenue ?? 1245000)} change={stats?.totalRevenueChange ?? 18.6}
+          <StatCard title="Total Revenue" value={formatINR(stats?.totalRevenue ?? 0)} change={stats?.totalRevenueChange ?? 0}
             icon={<span className="text-orange-600 font-bold text-sm">₹</span>} iconBg="bg-orange-100" />
-          <StatCard title="Avg Customer Value" value={formatINR(stats?.avgCustomerValue ?? 9726)}
+          <StatCard title="Avg Customer Value" value={formatINR(stats?.avgCustomerValue ?? 0)}
             icon={<span className="text-teal-600 font-bold text-sm">A</span>} iconBg="bg-teal-100" />
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+        <div className="glass-panel rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative flex-1 min-w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -232,7 +231,7 @@ export default function Customers() {
         </div>
 
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-8 bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="col-span-8 glass-panel rounded-2xl shadow-sm">
             <div className="p-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-800">Customer List</h3>
             </div>
@@ -289,7 +288,7 @@ export default function Customers() {
           </div>
 
           <div className="col-span-4 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-3 text-sm">Customer by Segment</h3>
               <div className="flex items-center gap-3">
                 <ResponsiveContainer width={100} height={100}>
@@ -313,7 +312,7 @@ export default function Customers() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-3 text-sm">Top Customers by Revenue</h3>
               <div className="space-y-2.5">
                 {(topByRevenue ?? []).map((c, i) => (
@@ -333,7 +332,7 @@ export default function Customers() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="glass-panel rounded-2xl p-4 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-3">New Customers Trend</h3>
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={trend ?? []}>
@@ -345,7 +344,7 @@ export default function Customers() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="glass-panel rounded-2xl p-4 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-3">Customers by Location</h3>
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={byLocation ?? []} layout="vertical">
@@ -353,12 +352,12 @@ export default function Customers() {
                 <XAxis type="number" tick={{ fontSize: 9 }} />
                 <YAxis type="category" dataKey="location" tick={{ fontSize: 9 }} width={80} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#2563EB" radius={[0, 3, 3, 0]} name="Customers" />
+                <Bar dataKey="count" fill="#000000" radius={[0, 3, 3, 0]} name="Customers" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
+      </PageShell>
     </Layout>
   );
 }

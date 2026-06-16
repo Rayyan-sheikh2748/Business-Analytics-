@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
+/* *{
+  background-image: url(../public/background.png) ;
+} */
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -267,5 +271,86 @@
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
+  }
+
+  .premium-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #a0aecd transparent;
+  }
+  .premium-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .premium-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #a0aecd, #64748b);
+    border-radius: 999px;
+  }
+  .premium-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .glass-panel {
+    @apply bg-white/75 backdrop-blur-xl border border-[#e8eaf2]/80;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 12px 40px rgba(160, 174, 205, 0.14);
+  }
+
+  .btn-primary {
+    @apply bg-[#000000] text-white text-sm px-4 py-2.5 rounded-xl font-medium transition-all;
+    @apply hover:bg-[#1a1a1a] hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)] active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-[#e8eaf2] text-[#475569] text-sm px-4 py-2.5 rounded-xl font-medium transition-all;
+    @apply hover:border-[#a0aecd]/50 hover:shadow-sm active:scale-[0.98];
+  }
+
+  .input-premium {
+    @apply px-3 py-2 text-sm border border-[#e8eaf2] rounded-xl bg-[#fafbfc] transition-all;
+    @apply focus:outline-none focus:ring-2 focus:ring-[#a0aecd]/40 focus:border-[#a0aecd]/60;
+  }
+
+  .chart-grid {
+    stroke: #eef0f6;
+  }
+
+  .select-premium {
+    @apply px-3 py-2 text-sm border border-[#e8eaf2] rounded-xl bg-white/90 transition-all;
+    @apply focus:outline-none focus:ring-2 focus:ring-[#a0aecd]/40 focus:border-[#a0aecd]/60;
+  }
+
+  .table-row-hover {
+    @apply hover:bg-[#fafbfc]/90 transition-colors;
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      #f4f5f9 0%,
+      #eef0f6 50%,
+      #f4f5f9 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .focus-backdrop-active {
+    filter: blur(2px);
+    opacity: 0.94;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+  }
+
+  .nav-glow:hover {
+    box-shadow: 0 0 20px rgba(160, 174, 205, 0.35);
+  }
+
+  .gradient-mesh {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(160, 174, 205, 0.25), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(0, 0, 0, 0.03), transparent);
   }
 }

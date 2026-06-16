@@ -14,6 +14,7 @@ const DEFAULTS = {
   emailNotifications: true,
   darkMode: false,
   compactView: true,
+  profitMargin: 20,
 };
 
 export function toSettingsResponse(doc) {
@@ -31,6 +32,7 @@ export function toSettingsResponse(doc) {
     emailNotifications: doc.emailNotifications,
     darkMode: doc.darkMode,
     compactView: doc.compactView,
+    profitMargin: doc.profitMargin,
   };
 }
 

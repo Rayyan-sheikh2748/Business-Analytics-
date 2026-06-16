@@ -9,18 +9,44 @@ import Forecasting from "@/pages/Forecasting";
 import Reports from "@/pages/Reports";
 import Customers from "@/pages/Customers";
 import Settings from "@/pages/Settings";
+import AiInsights from "@/pages/AiInsights";
 import NotFound from "@/pages/not-found";
+
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute, RoleGuard } from "./components/ProtectedRoutes";
+import Login from "./pages/Login";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/sales" component={Sales} />
-      <Route path="/inventory" component={Inventory} />
-      <Route path="/forecasting" component={Forecasting} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/customers" component={Customers} />
-      <Route path="/settings" component={Settings} />
+      <Route path="/login" component={Login} />
+      
+      <Route path="/">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin", "user"]}><Dashboard /></RoleGuard></ProtectedRoute>
+      </Route>
+      <Route path="/sales">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin", "user"]}><Sales /></RoleGuard></ProtectedRoute>
+      </Route>
+      <Route path="/inventory">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin", "user"]}><Inventory /></RoleGuard></ProtectedRoute>
+      </Route>
+      <Route path="/customers">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin", "user"]}><Customers /></RoleGuard></ProtectedRoute>
+      </Route>
+
+      <Route path="/forecasting">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin"]}><Forecasting /></RoleGuard></ProtectedRoute>
+      </Route>
+      <Route path="/reports">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin"]}><Reports /></RoleGuard></ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin"]}><Settings /></RoleGuard></ProtectedRoute>
+      </Route>
+      <Route path="/ai-insights">
+        <ProtectedRoute><RoleGuard allowedRoles={["admin"]}><AiInsights /></RoleGuard></ProtectedRoute>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -40,7 +66,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

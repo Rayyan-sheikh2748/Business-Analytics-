@@ -5,5 +5,6 @@ const router = Router();
 
 router.get("/settings", settings.getSettings);
 router.put("/settings", settings.updateSettings);
+router.post("/settings/clear-data", settings.clearData);
 
 export default router;

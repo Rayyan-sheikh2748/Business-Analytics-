@@ -25,6 +25,12 @@ async function resetCollections() {
   ]);
 }
 
+async function clearDatabase() {
+  const dbName = mongoose.connection.name;
+  console.log(`Clearing entire database: ${dbName}`);
+  await mongoose.connection.dropDatabase();
+}
+
 async function seedDataset(type = "grocery") {
   const data = datasets[type] ?? datasets.grocery;
   console.log(`Seeding ${type} dataset: ${data.businessName}`);
@@ -104,8 +110,12 @@ const datasetType = process.argv[2] || "grocery";
 
 try {
   await connectDB();
-  await resetCollections();
-  await seedDataset(datasetType);
+  if (datasetType === "clear") {
+    await clearDatabase();
+  } else {
+    await resetCollections();
+    await seedDataset(datasetType);
+  }
   await disconnectDB();
   process.exit(0);
 } catch (err) {

@@ -3,25 +3,41 @@ import { getNextSequence } from "../utils/sequence.js";
 import { categoryStats, buildRegexSearch } from "../services/analyticsService.js";
 
 export async function getStats(_req, res) {
-  const [total, ordersAgg, revAgg] = await Promise.all([
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  const [total, ordersAgg, revAgg, recentCustomers, prevCustomers,
+    recentOrdersAgg, prevOrdersAgg, recentRevAgg, prevRevAgg] = await Promise.all([
     Customer.countDocuments(),
     Customer.aggregate([{ $group: { _id: null, total: { $sum: "$totalOrders" } } }]),
     Customer.aggregate([{ $group: { _id: null, total: { $sum: "$totalSpent" } } }]),
+    Customer.countDocuments({ joinDate: { $gte: thirtyDaysAgo } }),
+    Customer.countDocuments({ joinDate: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }),
+    // recent 30d orders vs prior 30d
+    Customer.aggregate([{ $match: { joinDate: { $gte: thirtyDaysAgo } } }, { $group: { _id: null, total: { $sum: "$totalOrders" } } }]),
+    Customer.aggregate([{ $match: { joinDate: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } } }, { $group: { _id: null, total: { $sum: "$totalOrders" } } }]),
+    Customer.aggregate([{ $match: { joinDate: { $gte: thirtyDaysAgo } } }, { $group: { _id: null, total: { $sum: "$totalSpent" } } }]),
+    Customer.aggregate([{ $match: { joinDate: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } } }, { $group: { _id: null, total: { $sum: "$totalSpent" } } }]),
   ]);
 
   const totalCount = total;
   const totalRev = revAgg[0]?.total ?? 0;
 
+  const calcChange = (curr, prev) => {
+    if (!prev || prev === 0) return curr > 0 ? 100 : 0;
+    return Number((((curr - prev) / prev) * 100).toFixed(1));
+  };
+
   res.json({
     totalCustomers: totalCount,
-    newCustomers: 86,
+    newCustomers: recentCustomers,
     totalOrders: ordersAgg[0]?.total ?? 0,
     totalRevenue: totalRev,
     avgCustomerValue: totalCount > 0 ? Math.round(totalRev / totalCount) : 0,
-    totalCustomersChange: 12.5,
-    newCustomersChange: 15.8,
-    totalOrdersChange: 18.2,
-    totalRevenueChange: 20.4,
+    totalCustomersChange: calcChange(totalCount, totalCount - recentCustomers),
+    newCustomersChange: calcChange(recentCustomers, prevCustomers),
+    totalOrdersChange: calcChange(recentOrdersAgg[0]?.total || 0, prevOrdersAgg[0]?.total || 0),
+    totalRevenueChange: calcChange(recentRevAgg[0]?.total || 0, prevRevAgg[0]?.total || 0),
   });
 }
 
@@ -39,8 +55,43 @@ export async function getTopByRevenue(_req, res) {
 }
 
 export async function getTrend(_req, res) {
-  const labels = ["Apr 1", "Apr 6", "Apr 11", "Apr 16", "Apr 21", "Apr 26", "Apr 30"];
-  res.json(labels.map((l, i) => ({ label: l, value: 40 + i * 10 + Math.floor(Math.random() * 20) })));
+  // Use ALL customers — uploaded CSV datasets are typically historical,
+  // not within the last 30 days.
+  const allCustomers = await Customer.find().sort({ joinDate: 1 }).lean();
+
+  if (allCustomers.length === 0) {
+    return res.json([]);
+  }
+
+  // Build trend by splitting the entire date range into 7 buckets
+  const dates = allCustomers.map(c => c.joinDate).filter(Boolean).sort();
+  if (dates.length === 0) return res.json([]);
+
+  const earliest = new Date(dates[0]);
+  const latest   = new Date(dates[dates.length - 1]);
+  // Ensure valid dates
+  if (isNaN(earliest.getTime()) || isNaN(latest.getTime())) return res.json([]);
+
+  const rangeMs = Math.max(latest - earliest, 1);
+  const bucketMs = rangeMs / 7;
+
+  const result = [];
+  for (let i = 0; i < 7; i++) {
+    const bStart = new Date(earliest.getTime() + i * bucketMs);
+    const bEnd   = new Date(earliest.getTime() + (i + 1) * bucketMs);
+
+    const count = allCustomers.filter(c => {
+      const cDate = new Date(c.joinDate);
+      return cDate >= bStart && cDate < bEnd;
+    }).length;
+
+    result.push({
+      label: bEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: count  // No Math.random() fallback — 0 is legitimate
+    });
+  }
+
+  res.json(result);
 }
 
 export async function getByLocation(_req, res) {

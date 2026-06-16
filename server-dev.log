@@ -1,0 +1,16 @@
+
+> business-analytics-server@1.0.0 server
+> node --watch src/index.js
+
+MongoDB connected: business_analytics
+Successfully dropped unique index legacyId_1 from products
+Successfully dropped unique index legacyId_1 from customers
+Successfully dropped unique index legacyId_1 from sales
+API server running on http://localhost:5000
+Restarting 'src/index.js'
+Completed running 'src/index.js'. Waiting for file changes before restarting...
+Restarting 'src/index.js'
+MongoDB connected: business_analytics
+Successfully dropped unique index legacyId_1 from products
+Successfully dropped unique index legacyId_1 from stockmovements
+API server running on http://localhost:5000

@@ -15,6 +15,7 @@ const settingsSchema = new mongoose.Schema(
     emailNotifications: { type: Boolean, default: true },
     darkMode: { type: Boolean, default: false },
     compactView: { type: Boolean, default: true },
+    profitMargin: { type: Number, default: 20 },
   },
   { timestamps: true },
 );

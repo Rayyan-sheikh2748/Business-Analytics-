@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Download, Mail, Clock, FileText, X, CheckCircle } from "lucide-react";
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Layout from "@/components/Layout";
+import PageShell from "@/components/PageShell";
+import PageHero from "@/components/PageHero";
 import StatCard from "@/components/StatCard";
 import { formatINR } from "@/lib/format";
 import {
@@ -9,17 +11,12 @@ import {
   useGetReportByCategory, useGetReportTopProducts,
 } from "@workspace/api-client-react";
 
-const COLORS = ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+import GlassCard from "@/components/GlassCard";
+import FilterBar from "@/components/ui-premium/FilterBar";
+import PremiumToast from "@/components/ui-premium/PremiumToast";
+import { CHART_COLORS, CHART_PRIMARY, chartTooltipStyle, chartGridStroke, chartTickFill } from "@/components/ui-premium/chartStyles";
 
-function Toast({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) {
-  return (
-    <div className={`fixed bottom-6 right-6 text-white text-sm px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 z-50 ${type === "success" ? "bg-gray-900" : "bg-red-600"}`}>
-      {type === "success" ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <X className="w-4 h-4" />}
-      {message}
-      <button onClick={onClose} className="ml-2 text-gray-400 hover:text-white"><X className="w-3.5 h-3.5" /></button>
-    </div>
-  );
-}
+const COLORS = CHART_COLORS;
 
 export default function Reports() {
   const [reportType, setReportType] = useState("Sales Report");
@@ -86,59 +83,50 @@ export default function Reports() {
 
   return (
     <Layout>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      {toast && <PremiumToast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Reports</h1>
-            <p className="text-gray-500 text-sm">Generate, export, and schedule business reports</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={exportCSV} className="flex items-center gap-2 border border-gray-200 bg-white text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-              <Download className="w-4 h-4" /> Export CSV
-            </button>
-            <button onClick={exportPDF} className="flex items-center gap-2 border border-gray-200 bg-white text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-              <FileText className="w-4 h-4" /> Export PDF
-            </button>
-          </div>
-        </div>
+      <PageShell>
+        <PageHero
+          badge="Analytics"
+          title="Reports"
+          subtitle="Generate, export, and schedule business reports with advanced filters."
+          actions={
+            <>
+              <button type="button" onClick={exportCSV} className="btn-secondary flex items-center gap-2"><Download className="w-4 h-4" /> Export CSV</button>
+              <button type="button" onClick={exportPDF} className="btn-secondary flex items-center gap-2"><FileText className="w-4 h-4" /> Export PDF</button>
+            </>
+          }
+        />
 
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <div className="flex items-center gap-3 flex-wrap">
-            <select value={reportType} onChange={(e) => setReportType(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <FilterBar>
+            <select value={reportType} onChange={(e) => setReportType(e.target.value)} className="select-premium">
               {["Sales Report", "Inventory Report", "Customer Report", "Revenue Report"].map((t) => <option key={t}>{t}</option>)}
             </select>
-            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="select-premium">
               {["Last 7 Days", "Last 30 Days", "Last 90 Days", "Last Year"].map((d) => <option key={d}>{d}</option>)}
             </select>
-            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="select-premium">
               <option value="">All Categories</option>
               {["Electronics", "Accessories", "Wearables", "Home Appliances"].map((c) => <option key={c}>{c}</option>)}
             </select>
-            <button onClick={() => { setPage(1); refetchReport(); showToast("Report generated!"); }}
-              className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <button type="button" onClick={() => { setPage(1); refetchReport(); showToast("Report generated!"); }} className="btn-primary">
               Generate Report
             </button>
-          </div>
-        </div>
+        </FilterBar>
 
         <div className="grid grid-cols-4 gap-4">
-          <StatCard title="Total Revenue" value={formatINR(stats?.totalRevenue ?? 1245000)} change={stats?.revenueChange ?? 18.6}
+          <StatCard title="Total Revenue" value={formatINR(stats?.totalRevenue ?? 0)} change={stats?.revenueChange ?? 0}
             icon={<span className="text-emerald-600 font-bold">₹</span>} iconBg="bg-emerald-100" />
-          <StatCard title="Total Orders" value={(stats?.totalOrders ?? 1250).toLocaleString("en-IN")} change={stats?.ordersChange ?? 12.4}
+          <StatCard title="Total Orders" value={(stats?.totalOrders ?? 0).toLocaleString("en-IN")} change={stats?.ordersChange ?? 0}
             icon={<span className="text-blue-600 font-bold">O</span>} iconBg="bg-blue-100" />
-          <StatCard title="Units Sold" value={(stats?.totalUnitsSold ?? 4800).toLocaleString("en-IN")} change={stats?.unitsSoldChange ?? 15.3}
+          <StatCard title="Units Sold" value={(stats?.totalUnitsSold ?? 0).toLocaleString("en-IN")} change={stats?.unitsSoldChange ?? 0}
             icon={<span className="text-orange-600 font-bold">U</span>} iconBg="bg-orange-100" />
-          <StatCard title="Avg Order Value" value={formatINR(stats?.avgOrderValue ?? 25830)}
+          <StatCard title="Avg Order Value" value={formatINR(stats?.avgOrderValue ?? 0)}
             icon={<span className="text-purple-600 font-bold">A</span>} iconBg="bg-purple-100" />
         </div>
 
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-8 bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="col-span-8 glass-panel rounded-2xl shadow-sm">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-800">Report Preview — {reportType}</h3>
               <span className="text-xs text-gray-400">{dateRange}</span>
@@ -183,7 +171,7 @@ export default function Reports() {
           </div>
 
           <div className="col-span-4 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Mail className="w-4 h-4 text-blue-600" />
                 <h3 className="font-semibold text-gray-800 text-sm">Email Report</h3>
@@ -193,7 +181,7 @@ export default function Reports() {
               <button onClick={sendEmail} className="w-full bg-blue-600 text-white text-sm py-2 rounded-lg hover:bg-blue-700 transition-colors">Send Report</button>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4 text-purple-600" />
                 <h3 className="font-semibold text-gray-800 text-sm">Schedule Report</h3>
@@ -207,7 +195,7 @@ export default function Reports() {
               <button onClick={scheduleReport} className="w-full bg-purple-600 text-white text-sm py-2 rounded-lg hover:bg-purple-700 transition-colors">Schedule Report</button>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <h3 className="font-semibold text-gray-800 text-sm mb-3">Top Performing Products</h3>
               <div className="space-y-2">
                 {(topProducts ?? []).map((p, i) => (
@@ -226,7 +214,7 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="glass-panel rounded-2xl p-4 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-3">Revenue Trend</h3>
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={trend ?? []}>
@@ -238,7 +226,7 @@ export default function Reports() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="glass-panel rounded-2xl p-4 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-3">Revenue by Category</h3>
             <div className="flex items-center gap-4">
               <ResponsiveContainer width={130} height={130}>
@@ -262,7 +250,7 @@ export default function Reports() {
             </div>
           </div>
         </div>
-      </div>
+      </PageShell>
     </Layout>
   );
 }

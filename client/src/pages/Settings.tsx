@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Save, Shield, Bell, Globe, User, CreditCard, List, Trash2, RefreshCw, Database, X, Eye, EyeOff, Check } from "lucide-react";
 import Layout from "@/components/Layout";
-import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
+import PageShell from "@/components/PageShell";
+import PageHero from "@/components/PageHero";
+import PremiumToast from "@/components/ui-premium/PremiumToast";
+import DeleteConfirmModal from "@/components/ui-premium/DeleteConfirmModal";
+import GlassCard from "@/components/GlassCard";
+import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey, useClearData } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const TABS = [
@@ -16,18 +21,9 @@ const TABS = [
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${checked ? "bg-blue-600" : "bg-gray-200"}`}>
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${checked ? "bg-[#000000]" : "bg-[#e8eaf2]"}`}>
       <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${checked ? "translate-x-4" : "translate-x-0.5"}`} />
     </button>
-  );
-}
-
-function Toast({ message, onClose }: { message: string; onClose: () => void }) {
-  return (
-    <div className="fixed bottom-6 right-6 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 z-50">
-      <Check className="w-4 h-4 text-emerald-400" /> {message}
-      <button onClick={onClose} className="ml-2 text-gray-400 hover:text-white"><X className="w-3.5 h-3.5" /></button>
-    </div>
   );
 }
 
@@ -46,6 +42,7 @@ const AUDIT_LOGS = [
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("general");
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [toast, setToast] = useState("");
   const [showCurrentPwd, setShowCurrentPwd] = useState(false);
   const [showNewPwd, setShowNewPwd] = useState(false);
@@ -75,6 +72,7 @@ export default function Settings() {
     businessName: "", businessEmail: "", defaultTheme: "light", language: "en",
     timezone: "Asia/Kolkata", currency: "INR", dateFormat: "DD/MM/YYYY", timeFormat: "12h",
     enableAnalytics: true, autoRefresh: true, emailNotifications: true, darkMode: false, compactView: false,
+    profitMargin: 20,
   });
 
   const effectiveForm = settings ? {
@@ -91,9 +89,10 @@ export default function Settings() {
     emailNotifications: settings.emailNotifications ?? form.emailNotifications,
     darkMode: settings.darkMode ?? form.darkMode,
     compactView: settings.compactView ?? form.compactView,
+    profitMargin: settings.profitMargin !== undefined ? settings.profitMargin : form.profitMargin,
   } : form;
 
-  function update(key: string, value: string | boolean) {
+  function update(key: string, value: string | boolean | number) {
     setForm((prev) => ({ ...prev, [key]: value }));
     updateMutation.mutate({ data: { [key]: value } });
   }
@@ -107,22 +106,46 @@ export default function Settings() {
     showToast("Password changed successfully!");
   }
 
+  const clearDataMutation = useClearData({
+    mutation: {
+      onSuccess: (res) => {
+        showToast(res.message || "All uploaded data deleted successfully!");
+        queryClient.invalidateQueries();
+      },
+      onError: (err: any) => {
+        showToast(`Error: ${err?.response?.data?.error || err.message || "Failed to clear database"}`);
+      },
+    },
+  });
+
+  function handleClearData() {
+    setShowClearConfirm(false);
+    showToast("Clearing uploaded database...");
+    clearDataMutation.mutate();
+  }
+
   return (
     <Layout>
-      {toast && <Toast message={toast} onClose={() => setToast("")} />}
+      {toast && <PremiumToast message={toast} onClose={() => setToast("")} />}
+      <DeleteConfirmModal
+        open={showClearConfirm}
+        title="Delete All Uploaded Data?"
+        description="Are you sure you want to delete all uploaded analytics data (products, sales, customers, stock movements, dataset metadata)? This action cannot be undone."
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={handleClearData}
+      />
 
-      <div className="p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Settings</h1>
-            <p className="text-gray-500 text-sm">Manage your account and application preferences</p>
-          </div>
-        </div>
+      <PageShell>
+        <PageHero
+          badge="Configuration"
+          title="Settings"
+          subtitle="Manage your account, security, notifications, and application preferences."
+        />
 
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+        <div className="flex gap-1 glass-panel p-1 rounded-xl w-fit flex-wrap">
           {TABS.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${activeTab === id ? "bg-white text-gray-800 font-medium shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+            <button key={id} type="button" onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${activeTab === id ? "bg-[#a0aecd]/30 text-[#0a0a0a] font-medium shadow-sm border border-[#a0aecd]/40" : "text-[#64748b] hover:text-[#0a0a0a]"}`}>
               <Icon className="w-3.5 h-3.5" />{label}
             </button>
           ))}
@@ -131,8 +154,8 @@ export default function Settings() {
         {activeTab === "general" && (
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-8 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                <h3 className="font-semibold text-gray-800 mb-4">Business Settings</h3>
+              <GlassCard className="p-5" hover={false}>
+                <h3 className="font-semibold text-[#0a0a0a] mb-4">Business Settings</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { key: "businessName", label: "Business Name", placeholder: "Your Business Name" },
@@ -143,31 +166,36 @@ export default function Settings() {
                     { key: "currency", label: "Currency", type: "select", options: ["INR", "USD", "EUR"] },
                     { key: "dateFormat", label: "Date Format", type: "select", options: ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"] },
                     { key: "timeFormat", label: "Time Format", type: "select", options: ["12h", "24h"] },
+                    { key: "profitMargin", label: "Default Profit Margin (%)", placeholder: "20", type: "number" },
                   ].map(({ key, label, placeholder, type, options }) => (
                     <div key={key}>
                       <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
                       {type === "select" ? (
-                        <select value={(effectiveForm as Record<string, string | boolean>)[key] as string}
+                        <select value={(effectiveForm as Record<string, string | boolean | number>)[key] as string}
                           onChange={(e) => update(key, e.target.value)}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                           {options!.map((o) => <option key={o}>{o}</option>)}
                         </select>
+                      ) : type === "number" ? (
+                        <input type="number" placeholder={placeholder}
+                          value={(effectiveForm as Record<string, string | boolean | number>)[key] as number}
+                          onChange={(e) => update(key, Number(e.target.value))}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                       ) : (
                         <input type="text" placeholder={placeholder}
-                          value={(effectiveForm as Record<string, string | boolean>)[key] as string}
+                          value={(effectiveForm as Record<string, string | boolean | number>)[key] as string}
                           onChange={(e) => update(key, e.target.value)}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                       )}
                     </div>
                   ))}
                 </div>
-                <button onClick={() => updateMutation.mutate({ data: effectiveForm })}
-                  className="mt-5 flex items-center gap-2 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                <button type="button" onClick={() => updateMutation.mutate({ data: effectiveForm })} className="mt-5 btn-primary flex items-center gap-2">
                   <Save className="w-4 h-4" /> Save Business Settings
                 </button>
-              </div>
+              </GlassCard>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-4">System Preferences</h3>
                 <div className="space-y-4">
                   {[
@@ -190,7 +218,7 @@ export default function Settings() {
             </div>
 
             <div className="col-span-4 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-3 text-sm">Account Summary</h3>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg">S</div>
@@ -206,7 +234,7 @@ export default function Settings() {
                   <div className="flex justify-between py-1"><span className="text-gray-500">Language</span><span className="font-medium text-gray-700">{effectiveForm.language.toUpperCase()}</span></div>
                 </div>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3"><Database className="w-4 h-4 text-blue-600" /><h3 className="font-semibold text-gray-800 text-sm">Data & Backup</h3></div>
                 <div className="space-y-2">
                   {["Export All Data (CSV)", "Export All Data (JSON)", "Create Backup"].map((action) => (
@@ -218,6 +246,9 @@ export default function Settings() {
               <div className="bg-white rounded-xl border border-red-100 p-4 shadow-sm">
                 <h3 className="font-semibold text-red-700 text-sm mb-3">Danger Zone</h3>
                 <div className="space-y-2">
+                  <button onClick={() => setShowClearConfirm(true)} className="w-full flex items-center gap-2 text-xs text-red-600 px-3 py-2 border border-red-200 rounded-lg hover:bg-red-50">
+                    <Trash2 className="w-3.5 h-3.5" /> Delete All Uploaded Data
+                  </button>
                   <button onClick={() => showToast("Cache cleared successfully.")} className="w-full flex items-center gap-2 text-xs text-red-600 px-3 py-2 border border-red-200 rounded-lg hover:bg-red-50">
                     <RefreshCw className="w-3.5 h-3.5" /> Clear Cache
                   </button>
@@ -237,7 +268,7 @@ export default function Settings() {
         {activeTab === "profile" && (
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-8 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-4">Personal Information</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -278,7 +309,7 @@ export default function Settings() {
               </div>
             </div>
             <div className="col-span-4 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm text-center">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm text-center">
                 <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-3">S</div>
                 <p className="font-semibold text-gray-800">{profileForm.name}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{profileForm.designation}</p>
@@ -286,7 +317,7 @@ export default function Settings() {
                 <button onClick={() => showToast("Photo upload coming soon.")}
                   className="mt-3 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">Change Photo</button>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm">
                 <h3 className="font-semibold text-gray-800 text-sm mb-3">Account Status</h3>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between"><span className="text-gray-500">Account Type</span><span className="text-emerald-600 font-medium">Professional</span></div>
@@ -302,7 +333,7 @@ export default function Settings() {
         {activeTab === "notifications" && (
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-8 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-4">Email Notifications</h3>
                 <div className="space-y-4">
                   {[
@@ -322,7 +353,7 @@ export default function Settings() {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-4">In-App Notifications</h3>
                 <div className="space-y-4">
                   {[
@@ -344,7 +375,7 @@ export default function Settings() {
               </div>
             </div>
             <div className="col-span-4 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm">
                 <h3 className="font-semibold text-gray-800 text-sm mb-3">Notification Summary</h3>
                 <div className="space-y-2 text-xs">
                   {[
@@ -367,7 +398,7 @@ export default function Settings() {
         {activeTab === "security" && (
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-8 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-4">Change Password</h3>
                 <div className="space-y-3">
                   <div>
@@ -413,7 +444,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-4">Active Login Sessions</h3>
                 <div className="space-y-3">
                   {[
@@ -438,7 +469,7 @@ export default function Settings() {
             </div>
 
             <div className="col-span-4 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm">
                 <h3 className="font-semibold text-gray-800 text-sm mb-3">Two-Factor Authentication</h3>
                 <p className="text-xs text-gray-500 mb-3">Add an extra layer of security to your account.</p>
                 <div className="flex items-center justify-between mb-3">
@@ -448,7 +479,7 @@ export default function Settings() {
                 <button onClick={() => showToast("2FA setup email sent! Check your inbox.")}
                   className="w-full bg-blue-600 text-white text-sm py-2 rounded-lg hover:bg-blue-700">Enable 2FA</button>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm">
                 <h3 className="font-semibold text-gray-800 text-sm mb-3">Security Tips</h3>
                 <ul className="space-y-2 text-xs text-gray-600">
                   <li className="flex items-start gap-2"><Check className="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0" />Use a strong password with letters, numbers and symbols</li>
@@ -464,7 +495,7 @@ export default function Settings() {
         {activeTab === "billing" && (
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-8 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-800">Current Plan</h3>
                   <span className="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-full">Professional</span>
@@ -488,7 +519,7 @@ export default function Settings() {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="glass-panel rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-gray-800 mb-4">Payment History</h3>
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50">
@@ -517,7 +548,7 @@ export default function Settings() {
               </div>
             </div>
             <div className="col-span-4 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="glass-panel rounded-2xl p-4 shadow-sm">
                 <h3 className="font-semibold text-gray-800 text-sm mb-3">Upgrade Plan</h3>
                 <div className="space-y-2">
                   {[{ plan: "Starter", price: "Free", desc: "5 products, 30 days history" },
@@ -541,7 +572,7 @@ export default function Settings() {
         )}
 
         {activeTab === "audit" && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="glass-panel rounded-2xl shadow-sm">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-800">Audit Logs</h3>
               <button onClick={() => showToast("Audit logs exported!")}
@@ -578,7 +609,7 @@ export default function Settings() {
             </div>
           </div>
         )}
-      </div>
+      </PageShell>
     </Layout>
   );
 }

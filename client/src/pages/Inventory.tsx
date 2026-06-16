@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Download, Upload, Plus, Pencil, Trash2, RefreshCw, AlertTriangle, Package, X, Save } from "lucide-react";
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Layout from "@/components/Layout";
+import PageShell from "@/components/PageShell";
+import PageHero from "@/components/PageHero";
 import StatCard from "@/components/StatCard";
 import { formatINR } from "@/lib/format";
 import {
@@ -13,7 +15,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-const COLORS = ["#10B981", "#F59E0B", "#EF4444", "#94A3B8"];
+const COLORS = ["#a0aecd", "#000000", "#64748b", "#94a3b8"];
 const CATEGORIES = ["Electronics", "Accessories", "Wearables", "Home Appliances"];
 const WAREHOUSES = ["Main Warehouse", "East Warehouse", "West Warehouse"];
 
@@ -40,13 +42,13 @@ type ProductForm = { product: string; sku: string; category: string; warehouse: 
 const EMPTY_FORM: ProductForm = { product: "", sku: "", category: "Electronics", warehouse: "Main Warehouse", stock: "0", threshold: "10", unitPrice: "0" };
 
 function ProductModal({ item, onClose, onSave }: {
-  item?: { id: number; product: string; sku: string; category: string; warehouse: string; stock: number; threshold: number; unitPrice: number } | null;
+  item?: { id: number; product: string; sku: string; category: string; warehouse: string; stock: number; threshold: number; unitCost: number } | null;
   onClose: () => void;
   onSave: (data: ProductForm) => void;
 }) {
   const [form, setForm] = useState<ProductForm>(item ? {
     product: item.product, sku: item.sku, category: item.category,
-    warehouse: item.warehouse, stock: String(item.stock), threshold: String(item.threshold), unitPrice: String((item as unknown as {unitCost:number}).unitCost ?? 0),
+    warehouse: item.warehouse, stock: String(item.stock), threshold: String(item.threshold), unitPrice: String(item.unitCost ?? 0),
   } : EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<ProductForm>>({});
 
@@ -125,7 +127,7 @@ function ProductModal({ item, onClose, onSave }: {
         <div className="flex gap-3 px-6 pb-6">
           <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           <button onClick={() => { if (validate()) onSave(form); }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#000000] text-white rounded-xl text-sm font-medium hover:bg-[#1a1a1a]">
             <Save className="w-4 h-4" />{item ? "Save Changes" : "Add Product"}
           </button>
         </div>
@@ -197,7 +199,7 @@ export default function Inventory() {
   function handleEdit(form: ProductForm) {
     if (!editItem) return;
     updateMutation.mutate({ id: editItem.id, data: {
-      product: form.product, sku: form.sku, category: form.category,
+      product: form.product, category: form.category,
       warehouse: form.warehouse, stock: Number(form.stock), threshold: Number(form.threshold), unitCost: Number(form.unitPrice),
     }});
   }
@@ -213,6 +215,39 @@ export default function Inventory() {
     showToast("CSV exported!");
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    showToast("Uploading CSV...");
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/inventory/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      
+      if (data.stats) {
+        showToast(`Processed ${data.stats.totalRows} rows: ${data.stats.insertedRows} inserted, ${data.stats.updatedRows} updated, ${data.stats.skippedRows} skipped, ${data.stats.failedRows} failed.`);
+      } else {
+        showToast(`Imported ${data.insertedCount ?? 0} records successfully!`);
+      }
+      queryClient.invalidateQueries();
+    } catch (err: any) {
+      showToast(`Error: ${err.message}`);
+    }
+    
+    e.target.value = "";
+  }
+
   const totalPages = Math.ceil((inventory?.total ?? 0) / 10);
 
   return (
@@ -222,40 +257,37 @@ export default function Inventory() {
       {deleteTarget && <DeleteConfirm label={deleteTarget.label} onClose={() => setDeleteTarget(null)} onConfirm={() => deleteMutation.mutate({ id: deleteTarget.id })} />}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
 
-      <div className="p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Inventory Overview</h1>
-            <p className="text-gray-500 text-sm">Track stock levels, manage inventory and get alerts</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={exportCSV} className="flex items-center gap-2 border border-gray-200 bg-white text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50">
-              <Download className="w-4 h-4" /> Export
-            </button>
-            <label className="flex items-center gap-2 border border-gray-200 bg-white text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <Upload className="w-4 h-4" /> Import CSV
-              <input type="file" accept=".csv" className="hidden" onChange={(e) => { if (e.target.files?.[0]) showToast("CSV uploaded! Processing..."); }} />
-            </label>
-            <button onClick={() => setAddOpen(true)} className="flex items-center gap-2 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
-              <Plus className="w-4 h-4" /> Add New Product
-            </button>
-          </div>
-        </div>
+      <PageShell>
+        <PageHero
+          badge="Stock"
+          title="Inventory Overview"
+          subtitle="Track stock levels, manage products, and respond to low-stock alerts in real time."
+          actions={
+            <>
+              <button type="button" onClick={exportCSV} className="btn-secondary flex items-center gap-2"><Download className="w-4 h-4" /> Export</button>
+              <label className="btn-secondary flex items-center gap-2 cursor-pointer">
+                <Upload className="w-4 h-4" /> Import CSV
+                <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+              </label>
+              <button type="button" onClick={() => setAddOpen(true)} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" /> Add Product</button>
+            </>
+          }
+        />
 
-        <div className="grid grid-cols-5 gap-4">
-          <StatCard title="Total Products" value={(stats?.totalProducts ?? 128).toLocaleString("en-IN")}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+          <StatCard title="Total Products" value={(stats?.totalProducts ?? 0).toLocaleString("en-IN")}
             icon={<Package className="w-5 h-5 text-blue-600" />} iconBg="bg-blue-100" />
-          <StatCard title="Total Stock (Units)" value={(stats?.totalStock ?? 12458).toLocaleString("en-IN")}
+          <StatCard title="Total Stock (Units)" value={(stats?.totalStock ?? 0).toLocaleString("en-IN")}
             icon={<span className="text-emerald-600 font-bold text-sm">S</span>} iconBg="bg-emerald-100" />
-          <StatCard title="Low Stock Items" value={(stats?.lowStockItems ?? 18).toString()}
+          <StatCard title="Low Stock Items" value={(stats?.lowStockItems ?? 0).toString()}
             icon={<AlertTriangle className="w-5 h-5 text-amber-500" />} iconBg="bg-amber-100" />
-          <StatCard title="Out of Stock" value={(stats?.outOfStockItems ?? 6).toString()}
+          <StatCard title="Out of Stock" value={(stats?.outOfStockItems ?? 0).toString()}
             icon={<span className="text-red-500 font-bold text-sm">!</span>} iconBg="bg-red-100" />
-          <StatCard title="Inventory Value" value={formatINR(stats?.inventoryValue ?? 2475350)}
+          <StatCard title="Inventory Value" value={formatINR(stats?.inventoryValue ?? 0)}
             icon={<span className="text-purple-600 font-bold text-sm">₹</span>} iconBg="bg-purple-100" />
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+        <div className="glass-panel rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-3 flex-wrap">
             <input type="search" placeholder="Search Product / SKU" value={search} onChange={(e) => setSearch(e.target.value)}
               className="flex-1 min-w-48 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -269,12 +301,12 @@ export default function Inventory() {
               <option value="">All Warehouses</option>
               {WAREHOUSES.map((w) => <option key={w}>{w}</option>)}
             </select>
-            <button onClick={() => { setPage(1); refetchInv(); }} className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700">Apply Filters</button>
+            <button type="button" onClick={() => { setPage(1); refetchInv(); }} className="btn-primary">Apply Filters</button>
           </div>
         </div>
 
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-8 bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="col-span-8 glass-panel rounded-2xl shadow-sm">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-800">Inventory List</h3>
               <button onClick={() => refetchInv()} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Refresh"><RefreshCw className="w-4 h-4" /></button>
@@ -320,7 +352,7 @@ export default function Inventory() {
               <div className="flex gap-1">
                 <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="w-7 h-7 text-xs rounded text-gray-500 hover:bg-gray-100 disabled:opacity-40">&#8249;</button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => setPage(p)} className={`w-7 h-7 text-xs rounded ${page === p ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-100"}`}>{p}</button>
+                  <button key={p} onClick={() => setPage(p)} className={`w-7 h-7 text-xs rounded-xl ${page === p ? "bg-[#000000] text-white" : "text-[#64748b] hover:bg-[#f4f5f9]"}`}>{p}</button>
                 ))}
                 <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="w-7 h-7 text-xs rounded text-gray-500 hover:bg-gray-100 disabled:opacity-40">&#8250;</button>
               </div>
@@ -328,7 +360,7 @@ export default function Inventory() {
           </div>
 
           <div className="col-span-4 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-3">Stock Status Summary</h3>
               <div className="flex items-center gap-3">
                 <ResponsiveContainer width={100} height={100}>
@@ -352,7 +384,7 @@ export default function Inventory() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-800">Low Stock Alerts</h3>
                 <button className="text-blue-600 text-xs hover:underline" onClick={() => setCategory("")}>View All</button>
@@ -372,7 +404,7 @@ export default function Inventory() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-3">Recent Stock Movements</h3>
               <div className="space-y-2">
                 {(movements ?? []).map((m) => (
@@ -392,7 +424,7 @@ export default function Inventory() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="glass-panel rounded-2xl p-4 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-3">Stock Trend</h3>
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={trend ?? []}>
@@ -405,7 +437,7 @@ export default function Inventory() {
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="glass-panel rounded-2xl p-4 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-3">Top Categories by Stock Value</h3>
             <div className="space-y-3 mt-2">
               {(byCategory ?? []).map((cat, i) => (
@@ -422,7 +454,7 @@ export default function Inventory() {
             </div>
           </div>
         </div>
-      </div>
+      </PageShell>
     </Layout>
   );
 }

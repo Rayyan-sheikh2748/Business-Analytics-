@@ -7,8 +7,11 @@ import customersRoutes from "./customersRoutes.js";
 import reportsRoutes from "./reportsRoutes.js";
 import forecastingRoutes from "./forecastingRoutes.js";
 import settingsRoutes from "./settingsRoutes.js";
+import authRoutes from "./authRoutes.js";
 
 const router = Router();
+
+router.use("/auth", authRoutes);
 
 router.use(healthRoutes);
 router.use(dashboardRoutes);

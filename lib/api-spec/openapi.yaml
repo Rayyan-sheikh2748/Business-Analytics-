@@ -532,10 +532,10 @@ paths:
       tags: [forecasting]
       summary: Get demand forecast
       parameters:
-        - name: productId
+        - name: productName
           in: query
           schema:
-            type: integer
+            type: string
         - name: model
           in: query
           schema:
@@ -560,14 +560,15 @@ paths:
       tags: [forecasting]
       summary: Weekly forecast breakdown
       parameters:
-        - name: productId
+        - name: productName
           in: query
           schema:
-            type: integer
+            type: string
         - name: model
           in: query
           schema:
             type: string
+            default: ARIMA
         - name: horizon
           in: query
           schema:
@@ -589,10 +590,15 @@ paths:
       tags: [forecasting]
       summary: Daily demand heatmap
       parameters:
-        - name: productId
+        - name: productName
           in: query
           schema:
-            type: integer
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
+            default: ARIMA
       responses:
         "200":
           description: Heatmap data
@@ -608,6 +614,16 @@ paths:
       operationId: getForecastModelComparison
       tags: [forecasting]
       summary: Forecast model performance comparison
+      parameters:
+        - name: productName
+          in: query
+          schema:
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
+            default: ARIMA
       responses:
         "200":
           description: Model comparison
@@ -935,6 +951,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AppSettings"
 
+  /settings/clear-data:
+    post:
+      operationId: clearData
+      tags: [settings]
+      summary: Clear all uploaded datasets and analytics data
+      responses:
+        "200":
+          description: Data cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
 components:
   schemas:
     HealthStatus:
@@ -1035,6 +1070,16 @@ components:
         productsChange:
           type: number
         customersChange:
+          type: number
+        monthlyRevenue:
+          type: number
+        forecastedRevenue:
+          type: number
+        topSellingProduct:
+          type: string
+        fastestGrowingProduct:
+          type: string
+        forecastConfidenceScore:
           type: number
 
     Order:
@@ -1548,7 +1593,7 @@ components:
 
     AppSettings:
       type: object
-      required: [businessName, businessEmail, defaultTheme, language, timezone, currency, dateFormat, timeFormat, enableAnalytics, autoRefresh, emailNotifications, darkMode, compactView]
+      required: [businessName, businessEmail, defaultTheme, language, timezone, currency, dateFormat, timeFormat, enableAnalytics, autoRefresh, emailNotifications, darkMode, compactView, profitMargin]
       properties:
         businessName:
           type: string
@@ -1576,6 +1621,8 @@ components:
           type: boolean
         compactView:
           type: boolean
+        profitMargin:
+          type: number
 
     SettingsUpdate:
       type: object
@@ -1606,3 +1653,5 @@ components:
           type: boolean
         compactView:
           type: boolean
+        profitMargin:
+          type: number
