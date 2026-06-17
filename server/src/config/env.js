@@ -10,4 +10,6 @@ export const env = {
   mongoUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/business_analytics",
   nodeEnv: process.env.NODE_ENV || "development",
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+  mlApiUrl: process.env.ML_API_URL || "",
+  jwtSecret: process.env.JWT_SECRET || "business_analytics_secret_key",
 };

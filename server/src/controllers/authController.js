@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
+import { env } from "../config/env.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "business_analytics_secret_key";
+const JWT_SECRET = env.jwtSecret;
 const JWT_EXPIRES_IN = "7d"; // Session duration
 
 export async function register(req, res) {

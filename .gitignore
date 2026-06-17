@@ -50,7 +50,14 @@ client/node_modules/
 server/node_modules/
 *.zip
 
+# Python ML service
+ml-service/__pycache__/
+ml-service/venv/
+ml-service/.venv/
+ml-service/*.pyc
+
 # Environment files
 .env
 server/.env
 client/.env
+ml-service/.env

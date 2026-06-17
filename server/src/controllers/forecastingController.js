@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Sale } from "../models/Sale.js";
 import { Product } from "../models/Product.js";
+import { env } from "../config/env.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pythonScriptPath = path.resolve(__dirname, "../ml/forecast.py");
@@ -54,6 +55,24 @@ function trySpawnPython(pythonCmd, scriptPath, payload) {
 }
 
 async function runMLForecast(payload) {
+  if (env.mlApiUrl) {
+    try {
+      const forecastUrl = `${env.mlApiUrl.replace(/\/$/, "")}/forecast`;
+      console.log(`Calling remote ML service at: ${forecastUrl}`);
+      const response = await fetch(forecastUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+      console.warn(`Remote ML service returned status ${response.status}. Falling back to local spawn.`);
+    } catch (err) {
+      console.warn(`[Remote ML Forecast Error - falling back to local spawn]`, err.message);
+    }
+  }
+
   const cmds = ["python", "python3", "py"];
   let lastErr;
   for (const cmd of cmds) {

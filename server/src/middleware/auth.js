@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "business_analytics_secret_key";
+const JWT_SECRET = env.jwtSecret;
 
 export function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];

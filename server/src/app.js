@@ -8,11 +8,15 @@ const app = express();
 
 app.use(cors({ 
   origin: function (origin, callback) {
-    if (!origin || origin.startsWith("http://localhost:")) {
-      callback(null, true);
-    } else {
-      callback(null, env.clientUrl);
-    }
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    // Allow localhost for development
+    if (origin.startsWith("http://localhost:")) return callback(null, true);
+    // Allow the configured production client URL
+    if (env.clientUrl && origin === env.clientUrl) return callback(null, true);
+    // Allow any .onrender.com subdomain
+    if (origin.endsWith(".onrender.com")) return callback(null, true);
+    callback(null, false);
   }, 
   credentials: true 
 }));

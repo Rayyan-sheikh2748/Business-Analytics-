@@ -225,7 +225,8 @@ export default function Inventory() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/inventory/upload", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/inventory/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`

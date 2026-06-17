@@ -36,7 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = async (t: string) => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/me", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${t}`,
         },

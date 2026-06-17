@@ -195,7 +195,8 @@ export default function Sales() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/sales/upload", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/sales/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`

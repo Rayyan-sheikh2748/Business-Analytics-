@@ -1,0 +1,47 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Python ML Service (FastAPI)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: business-analytics-ml-service
+    env: python
+    plan: free
+    rootDir: ml-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+  # ----------------------------------------------------------------------------
+  # 2. Node.js Backend Service (Express)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: business-analytics-backend
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false # User will paste their MongoDB Atlas Connection URI
+      - key: JWT_SECRET
+        sync: false # User will paste their JWT secret key
+      - key: ML_API_URL
+        sync: false # User will paste the deployed Python ML service URL
+      - key: CLIENT_URL
+        sync: false # User will paste the deployed React frontend URL
+
+  # ----------------------------------------------------------------------------
+  # 3. React Frontend Static Site (Vite)
+  # ----------------------------------------------------------------------------
+  - type: static
+    name: business-analytics-frontend
+    plan: free
+    buildCommand: npm install -g pnpm && pnpm install && pnpm run build
+    publishPath: client/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # User will paste the deployed Backend URL
